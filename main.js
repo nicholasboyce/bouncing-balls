@@ -1,5 +1,8 @@
 // setup canvas
 
+const para = document.querySelector("p");
+let ballCount = 0;
+
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -83,9 +86,10 @@ class Ball extends Shape{
 }
 
 class EvilCircle extends Shape {
-  constructor(x, y, velX, velY, color, size) {
+
+  constructor(x, y) {
     super(x, y, 20, 20);
-    this.color = white;
+    this.color = "white";
     this.size = 10;
 
     window.addEventListener("keydown", (e) => {
@@ -105,6 +109,48 @@ class EvilCircle extends Shape {
       }
     });
   }
+
+  draw() {
+    ctx.beginPath();
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 3;
+    ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+    ctx.stroke();
+  }
+
+  checkBounds() {
+    if ((this.x + this.size) >= width) {
+      this.x -= this.size;
+    }
+
+    if ((this.x - this.size) <= 0) {
+      this.x += this.size;
+    }
+
+    if ((this.y + this.size) >= height) {
+      this.y -= this.size;
+    }
+
+    if ((this.y - this.size) <= 0) {
+      this.y += this.size;
+    }
+  }
+
+  collisionDetect() {
+    for (const ball of balls) {
+      if (ball.exists) {
+        const dx = this.x - ball.x;
+        const dy = this.y - ball.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < this.size + ball.size) {
+          ball.exists = false;
+          ballCount--;
+          para.textContent = para.textContent.slice(0, 12) + ballCount; 
+        }
+      }
+    }
+  }  
   
 }
 
@@ -121,18 +167,29 @@ while(balls.length < 25) {
     size
   );
 
+  ballCount++;
   balls.push(ball);
+  para.textContent = para.textContent.slice(0, 12) + ballCount;
 }
+
+const player = new EvilCircle(random(0, width), random(0, height)); 
+
 
 function loop() {
   ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
   ctx.fillRect(0, 0, width, height);
 
   for (const ball of balls) {
-    ball.draw();
-    ball.update();
-    ball.collisionDetect();
+    if (ball.exists) {
+      ball.draw();
+      ball.update();
+      ball.collisionDetect();
+    }
   }
+
+  player.draw();
+  player.checkBounds();
+  player.collisionDetect();
 
   requestAnimationFrame(loop);
 }
